@@ -345,6 +345,7 @@ class Game {
             this.board.grid[row][col].toggleSelect();
             this.board.grid[neighbor.row][neighbor.col].toggleSelect();
             const tile1 = this.board.grid[row][col];
+            const temp = this.board.grid[row][col];
             this.board.grid[row][col] = this.board.grid[neighbor.row][neighbor.col];
             this.board.grid[neighbor.row][neighbor.col] = temp;
 
