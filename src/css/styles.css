@@ -115,12 +115,23 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.75);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999;
+}
+
+.victory-overlay .card {
+  background: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 0 2rem rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.hidden {
+  display: none !important;
 }
 
 .victory-reward {
@@ -183,12 +194,19 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.75);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999;
+}
+
+.gallery-overlay .card {
+  background: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 0 2rem rgba(0, 0, 0, 0.2);
+  text-align: center;
 }
 
 .gallery-grid {
@@ -226,7 +244,58 @@ body {
 }
 
 .hidden {
+  display: none !important;
+}
+
+.reward-frame {
+  width: 180px;
+  height: 180px;
+  background: linear-gradient(45deg, #ffd700, #ffa500);
+  border-radius: 20px;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.reward-placeholder {
   display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+}
+
+.reward-frame {
+  width: 180px;
+  height: 180px;
+  background: linear-gradient(45deg, #ffd700, #ffa500);
+  border-radius: 20px;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.reward-frame::before {
+  content: "🏆";
+  font-size: 64px;
+}
+
+.reward-title {
+  margin-top: 10px;
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.reward-title {
+  font-size: 16px;
+  margin-top: 10px;
 }
 
 .game-tile {

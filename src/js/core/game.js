@@ -15,6 +15,7 @@ class Game {
     this.score = 0;
     this.coins = 0;
     this.currentLevel = 1;
+    this.isPaused = false;
     this.initTilesWithoutMatches();
     this.loadProgress();
     this.render();
@@ -83,6 +84,7 @@ class Game {
   }
 
   handleTileClick(row, col) {
+    if (this.isPaused) return;
     console.log(`Клик по ячейке: ${row},${col}`);
     const tile = this.board.grid[row][col];
     if (!tile) return;
@@ -304,71 +306,48 @@ class Game {
 
   checkLevelCompletion() {
     const currentLevelData = levels[this.currentLevel - 1];
-    if (this.score >= currentLevelData.targetScore) {
+    if (this.score >= currentLevelData.targetScore && !this.isPaused) {
+      this.isPaused = true;
       this.coins += currentLevelData.reward;
-      this.currentLevel++;
-      this.score = 0;
       this.saveProgress();
-      if (this.currentLevel > levels.length) {
-        this.showVictoryScreen();
-        this.currentLevel = 1;
-      }
-      this.initTilesWithoutMatches();
+      this.showVictoryScreen();
     }
   }
 
   showHint() {
-    // Логика показа подсказки
-    const matches = this.board.checkMatches(false);
-    if (matches.length === 0) {
-      this.coins += 30;
-      this.saveProgress();
-      return;
-    }
-
+    // Создаем глубокую копию доски
+    const boardCopy = JSON.parse(JSON.stringify(this.board));
+    
     // Находим первый возможный ход
     let hintPositions = null;
-    outer: for (let row = 0; row < this.board.rows; row++) {
-      for (let col = 0; col < this.board.cols; col++) {
-        // Проверяем соседние ячейки
+    outer: for (let row = 0; row < boardCopy.rows; row++) {
+      for (let col = 0; col < boardCopy.cols; col++) {
         const neighbors = [
-          {row: row - 1, col}, // Верхняя
-          {row: row + 1, col}, // Нижняя
-          {row, col: col - 1}, // Левая
-          {row, col: col + 1}  // Правая
+          {row: row - 1, col},
+          {row: row + 1, col},
+          {row, col: col - 1},
+          {row, col: col + 1}
         ];
 
         for (const neighbor of neighbors) {
-          if (neighbor.row >= 0 && neighbor.row < this.board.rows &&
-              neighbor.col >= 0 && neighbor.col < this.board.cols) {
-            // Пробуем поменять местами
-            this.board.grid[row][col].toggleSelect();
-            this.board.grid[neighbor.row][neighbor.col].toggleSelect();
-            const tile1 = this.board.grid[row][col];
-            const temp = this.board.grid[row][col];
-            this.board.grid[row][col] = this.board.grid[neighbor.row][neighbor.col];
-            this.board.grid[neighbor.row][neighbor.col] = temp;
+          if (neighbor.row >= 0 && neighbor.row < boardCopy.rows &&
+              neighbor.col >= 0 && neighbor.col < boardCopy.cols) {
+            const temp = boardCopy.grid[row][col];
+            boardCopy.grid[row][col] = boardCopy.grid[neighbor.row][neighbor.col];
+            boardCopy.grid[neighbor.row][neighbor.col] = temp;
 
-            if (this.board.checkMatches(false)) {
+            if (this.checkMatchesOnCopy(boardCopy)) {
               hintPositions = [
                 {row, col},
                 {row: neighbor.row, col: neighbor.col}
               ];
-              // Возвращаем фишки на место
-              const temp = this.board.grid[row][col];
-              this.board.grid[row][col] = this.board.grid[neighbor.row][neighbor.col];
-              this.board.grid[neighbor.row][neighbor.col] = temp;
-              this.board.grid[row][col].toggleSelect();
-              this.board.grid[neighbor.row][neighbor.col].toggleSelect();
               break outer;
             }
 
-            // Возвращаем фишки на место
-            const tile2 = this.board.grid[row][col];
-            this.board.grid[row][col] = this.board.grid[neighbor.row][neighbor.col];
-            this.board.grid[neighbor.row][neighbor.col] = temp;
-            this.board.grid[row][col].toggleSelect();
-            this.board.grid[neighbor.row][neighbor.col].toggleSelect();
+            // Возвращаем фишки на место в копии
+            const temp2 = boardCopy.grid[row][col];
+            boardCopy.grid[row][col] = boardCopy.grid[neighbor.row][neighbor.col];
+            boardCopy.grid[neighbor.row][neighbor.col] = temp2;
           }
         }
       }
@@ -390,52 +369,90 @@ class Game {
     }
   }
 
-  showVictoryScreen() {
-    const overlay = document.getElementById('victory-overlay');
-    overlay.classList.remove('hidden');
-        const victoryOverlay = document.createElement('div');
-        victoryOverlay.className = 'victory-overlay';
-    
-        const rewardImage = document.createElement('img');
-        rewardImage.className = 'victory-reward';
-        rewardImage.src = levels[this.currentLevel - 1].rewardImage;
-        rewardImage.onerror = () => {
-          rewardImage.src = '';
-          rewardImage.className = 'victory-placeholder';
-          rewardImage.textContent = `Уровень ${this.currentLevel}`;
-        };
-    
-        const coins = document.createElement('div');
-        coins.className = 'victory-coins';
-        coins.textContent = `+${levels[this.currentLevel - 1].reward} монет`;
-    
-        const nextLevelBtn = document.createElement('button');
-        nextLevelBtn.className = 'victory-btn';
-        nextLevelBtn.textContent = 'Следующий уровень';
-        nextLevelBtn.onclick = () => {
-          document.body.removeChild(victoryOverlay);
-          this.initTilesWithoutMatches();
-          this.render();
-        };
-    
-        const galleryBtn = document.createElement('button');
-        galleryBtn.className = 'victory-btn';
-        galleryBtn.textContent = 'В галерею';
-        galleryBtn.onclick = () => {
-          document.body.removeChild(victoryOverlay);
-          this.showGallery();
-        };
-    
-        victoryOverlay.appendChild(rewardImage);
-        victoryOverlay.appendChild(coins);
-        victoryOverlay.appendChild(nextLevelBtn);
-        victoryOverlay.appendChild(galleryBtn);
-        document.body.appendChild(victoryOverlay);
+checkMatchesOnCopy(boardCopy) {
+  const matches = [];
+
+  // Горизонтальные совпадения
+  for (let row = 0; row < boardCopy.rows; row++) {
+    let count = 1;
+    for (let col = 1; col < boardCopy.cols; col++) {
+      if (boardCopy.grid[row][col] && boardCopy.grid[row][col - 1] &&
+          boardCopy.grid[row][col].type === boardCopy.grid[row][col - 1].type) {
+        count++;
+      } else {
+        if (count >= 3) {
+          matches.push({row, start: col - count, end: col - 1, direction: 'horizontal'});
+        }
+        count = 1;
+      }
+    }
+    if (count >= 3) {
+      matches.push({row, start: boardCopy.cols - count, end: boardCopy.cols - 1, direction: 'horizontal'});
+    }
   }
 
+  // Вертикальные совпадения
+  for (let col = 0; col < boardCopy.cols; col++) {
+    let count = 1;
+    for (let row = 1; row < boardCopy.rows; row++) {
+      if (boardCopy.grid[row][col] && boardCopy.grid[row - 1][col] &&
+          boardCopy.grid[row][col].type === boardCopy.grid[row - 1][col].type) {
+        count++;
+      } else {
+        if (count >= 3) {
+          matches.push({col, start: row - count, end: row - 1, direction: 'vertical'});
+        }
+        count = 1;
+      }
+    }
+    if (count >= 3) {
+      matches.push({col, start: boardCopy.rows - count, end: boardCopy.rows - 1, direction: 'vertical'});
+    }
+  }
+
+  return matches.length > 0;
+}
+
+showVictoryScreen() {
+   // Ставим игру на паузу
+   this.isPaused = true;
+   
+   const overlay = document.getElementById('victory-overlay');
+   overlay.classList.remove('hidden');
+   overlay.style.display = 'flex';
+   overlay.style.zIndex = '1000';
+
+   const rewardImage = document.getElementById('victory-reward');
+   rewardImage.src = levels[this.currentLevel - 1].rewardImage;
+   rewardImage.onerror = () => {
+     rewardImage.src = '';
+     rewardImage.className = 'reward-frame';
+     rewardImage.innerHTML = `🏆<div class="reward-title">Уровень ${levels[this.currentLevel - 1].level}</div>`;
+   };
+
+   const coins = document.getElementById('victory-coins');
+   coins.textContent = `+${levels[this.currentLevel - 1].reward} монет`;
+
+   document.getElementById('next-level-btn').onclick = () => {
+     overlay.classList.add('hidden');
+     this.isPaused = false;
+     this.currentLevel++;
+     if (this.currentLevel > levels.length) {
+       this.currentLevel = 1;
+     }
+     this.score = 0;
+     this.initTilesWithoutMatches();
+     this.render();
+   };
+ }
+
   showGallery() {
+    // Ставим игру на паузу
+    this.isPaused = true;
+    
     const overlay = document.getElementById('gallery-overlay');
     overlay.classList.remove('hidden');
+    overlay.style.display = 'flex';
     const galleryOverlay = document.getElementById('gallery-overlay');
     const galleryGrid = galleryOverlay.querySelector('.gallery-grid');
     galleryGrid.innerHTML = '';
