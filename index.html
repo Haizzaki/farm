@@ -6,6 +6,7 @@
   <title>Три в ряд</title>
   <link rel="stylesheet" href="src/css/styles.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+  <script src="https://telegram.org"></script>
 </head>
 <body>
   <div id="hud">
@@ -29,26 +30,35 @@
   <div id="game"></div>
   <div id="boosters">
     <button id="hint-btn" class="booster-btn">
-      Подсказка <span class="booster-cost">30 💰</span>
+      Подсказка <span class="booster-cost">50 💰</span>
     </button>
     <button id="shuffle-btn" class="booster-btn">
-      Перемешать <span class="booster-cost">50 💰</span>
+      Перемешать <span class="booster-cost">80 💰</span>
     </button>
     <button id="gallery-btn" class="booster-btn">
       Галерея
     </button>
   </div>
-  <div id="victory-overlay" class="victory-overlay hidden card">
-    <img id="victory-reward" class="victory-reward" src="" alt="Награда">
-    <div id="victory-coins" class="victory-coins"></div>
-    <button id="next-level-btn" class="victory-btn">Следующий уровень</button>
-    <button id="gallery-btn" class="victory-btn">В галерею</button>
+  <div id="victory-overlay" class="victory-overlay hidden">
+    <div class="victory-card">
+      <div class="victory-trophy">🏆</div>
+      <div class="victory-title">Уровень пройден!</div>
+      <div id="victory-coins" class="victory-coins"></div>
+      <button id="next-level-btn" class="victory-btn">Следующий уровень</button>
+      <button id="gallery-btn" class="victory-btn">В галерею</button>
+    </div>
   </div>
-  <div id="gallery-overlay" class="gallery-overlay hidden card">
-    <div class="gallery-grid"></div>
-    <button id="close-gallery-btn" class="victory-btn">Закрыть</button>
+  <div id="gallery-overlay" class="gallery-overlay hidden">
+    <div class="gallery-card">
+      <div class="gallery-grid"></div>
+      <button id="close-gallery-btn" class="victory-btn">Закрыть</button>
+    </div>
   </div>
   <script type="module">
+    if (window.Telegram?.WebApp) {
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
+    }
     import Game from './src/js/core/game.js';
     new Game();
   </script>

@@ -13,11 +13,12 @@ class Game {
     this.board = new Board(8, 8);
     this.selectedTile = null;
     this.score = 0;
-    this.coins = 0;
+    this.coins = 40;
     this.currentLevel = 1;
     this.isPaused = false;
     this.initTilesWithoutMatches();
     this.loadProgress();
+    this.updateBackground();
     this.render();
     this.setupEventListeners();
   }
@@ -58,12 +59,25 @@ class Game {
   }
 
   initTiles() {
-    const types = ['red', 'green', 'blue', 'yellow', 'purple'];
+    const seasonIndex = Math.floor((this.currentLevel - 1) / 10);
+    const season = levels[this.currentLevel - 1].season;
     
     for (let row = 0; row < this.board.rows; row++) {
       for (let col = 0; col < this.board.cols; col++) {
-        const randomType = types[Math.floor(Math.random() * types.length)];
-        this.board.grid[row][col] = new Tile(randomType);
+        const randomType = Math.floor(Math.random() * season.emojis.length);
+        const randomEmoji = season.emojis[randomType];
+        const tile = new Tile(randomType);
+        
+        tile.element.style.display = 'flex';
+        tile.element.style.alignItems = 'center';
+        tile.element.style.justifyContent = 'center';
+        tile.element.style.fontSize = '32px';
+        tile.element.style.lineHeight = '1';
+        tile.element.style.userSelect = 'none';
+        tile.element.style.backgroundColor = 'rgba(255, 255, 255, 0.85)';
+        tile.element.textContent = randomEmoji;
+        
+        this.board.grid[row][col] = tile;
       }
     }
   }
@@ -217,11 +231,33 @@ class Game {
 
       // Генерация новых фишек
       for (let row = emptyRow; row >= 0; row--) {
-        const types = ['red', 'green', 'blue', 'yellow', 'purple'];
-        const randomType = types[Math.floor(Math.random() * types.length)];
+        const randomType = Math.floor(Math.random() * 6); // 0..5
         this.board.grid[row][col] = new Tile(randomType);
       }
     }
+  }
+
+  updateBackground() {
+    const season = Math.ceil(this.currentLevel / 10);
+    const bgPath = `assets/backgrounds/bg_${season}.png`;
+    const body = document.body;
+    
+    const img = new Image();
+    img.src = bgPath;
+    img.onload = () => {
+      body.style.backgroundImage = `url(${bgPath})`;
+    };
+    img.onerror = () => {
+      const fallbackPath = 'assets/backgrounds/bg_1.png';
+      const fallbackImg = new Image();
+      fallbackImg.src = fallbackPath;
+      fallbackImg.onload = () => {
+        body.style.backgroundImage = `url(${fallbackPath})`;
+      };
+      fallbackImg.onerror = () => {
+        body.style.backgroundImage = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+      };
+    };
   }
 
   render() {
@@ -249,10 +285,10 @@ class Game {
     // Настройка бустеров
     const hintBtn = document.getElementById('hint-btn');
     if (hintBtn) {
-      hintBtn.disabled = this.coins < 30;
+      hintBtn.disabled = this.coins < 50;
       hintBtn.onclick = () => {
-        if (this.coins >= 30) {
-          this.coins -= 30;
+        if (this.coins >= 50) {
+          this.coins -= 50;
           this.saveProgress();
           this.showHint();
           this.render();
@@ -262,10 +298,10 @@ class Game {
 
     const shuffleBtn = document.getElementById('shuffle-btn');
     if (shuffleBtn) {
-      shuffleBtn.disabled = this.coins < 50;
+      shuffleBtn.disabled = this.coins < 80;
       shuffleBtn.onclick = () => {
-        if (this.coins >= 50) {
-          this.coins -= 50;
+        if (this.coins >= 80) {
+          this.coins -= 80;
           this.saveProgress();
           this.board.shuffleTiles();
           this.render();
@@ -292,6 +328,9 @@ class Game {
           const tileEl = document.createElement('div');
           tileEl.className = `game-tile tile-${tile.type}`;
           if (tile.selected) tileEl.classList.add('selected');
+          const seasonIndex = Math.floor((this.currentLevel - 1) / 10);
+          const emoji = levels[this.currentLevel - 1].season.emojis[tile.type];
+          tileEl.textContent = emoji;
           cell.appendChild(tileEl);
         }
 
@@ -420,18 +459,9 @@ showVictoryScreen() {
    const overlay = document.getElementById('victory-overlay');
    overlay.classList.remove('hidden');
    overlay.style.display = 'flex';
-   overlay.style.zIndex = '1000';
-
-   const rewardImage = document.getElementById('victory-reward');
-   rewardImage.src = levels[this.currentLevel - 1].rewardImage;
-   rewardImage.onerror = () => {
-     rewardImage.src = '';
-     rewardImage.className = 'reward-frame';
-     rewardImage.innerHTML = `🏆<div class="reward-title">Уровень ${levels[this.currentLevel - 1].level}</div>`;
-   };
 
    const coins = document.getElementById('victory-coins');
-   coins.textContent = `+${levels[this.currentLevel - 1].reward} монет`;
+   coins.textContent = `+15 монет`;
 
    document.getElementById('next-level-btn').onclick = () => {
      overlay.classList.add('hidden');
@@ -441,6 +471,7 @@ showVictoryScreen() {
        this.currentLevel = 1;
      }
      this.score = 0;
+     this.updateBackground();
      this.initTilesWithoutMatches();
      this.render();
    };
@@ -453,8 +484,7 @@ showVictoryScreen() {
     const overlay = document.getElementById('gallery-overlay');
     overlay.classList.remove('hidden');
     overlay.style.display = 'flex';
-    const galleryOverlay = document.getElementById('gallery-overlay');
-    const galleryGrid = galleryOverlay.querySelector('.gallery-grid');
+    const galleryGrid = overlay.querySelector('.gallery-grid');
     galleryGrid.innerHTML = '';
 
     const progress = JSON.parse(localStorage.getItem('match3-progress') || '{}');
@@ -483,10 +513,8 @@ showVictoryScreen() {
       galleryGrid.appendChild(reward);
     }
 
-    galleryOverlay.classList.remove('hidden');
-
     document.getElementById('close-gallery-btn').onclick = () => {
-      galleryOverlay.classList.add('hidden');
+      overlay.classList.add('hidden');
     };
   }
 }

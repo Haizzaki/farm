@@ -15,23 +15,21 @@ class Board {
     return grid;
   }
   initTiles(grid) {
-    const types = ['red', 'green', 'blue', 'yellow', 'purple'];
     for (let row = 0; row < this.rows; row++) {
       for (let col = 0; col < this.cols; col++) {
-        const randomType = types[Math.floor(Math.random() * types.length)];
+        const randomType = Math.floor(Math.random() * 6); // 0..5
         grid[row][col] = new Tile(randomType);
       }
     }
   }
   shuffleTiles() {
-    const types = ['red', 'green', 'blue', 'yellow', 'purple'];
     let attempts = 0;
     const maxAttempts = 100;
 
     do {
       for (let row = 0; row < this.rows; row++) {
         for (let col = 0; col < this.cols; col++) {
-          const randomType = types[Math.floor(Math.random() * types.length)];
+          const randomType = Math.floor(Math.random() * 6); // 0..5
           this.grid[row][col] = new Tile(randomType);
         }
       }
