@@ -2,12 +2,20 @@ body {
   margin: 0;
   padding: 0;
   font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
 }
 
 #game {
-  width: 100vw;
-  height: 100vh;
+  width: 90vmin;
+  height: 90vmin;
+  max-width: 500px;
+  max-height: 500px;
   background-color: #f0f0f0;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.1);
 }
 
 .game-grid {
@@ -33,6 +41,13 @@ body {
   width: 80%;
   height: 80%;
   border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.game-tile.selected {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(255,255,255,0.8);
 }
 
 .tile-red { background-color: red; }
