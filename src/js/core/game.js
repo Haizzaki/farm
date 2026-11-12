@@ -310,7 +310,7 @@ class Game {
       this.score = 0;
       this.saveProgress();
       if (this.currentLevel > levels.length) {
-        alert('Поздравляем! Вы прошли все уровни!');
+        this.showVictoryScreen();
         this.currentLevel = 1;
       }
       this.initTilesWithoutMatches();
@@ -319,7 +319,157 @@ class Game {
 
   showHint() {
     // Логика показа подсказки
-    console.log('Показать подсказку');
+    const matches = this.board.checkMatches(false);
+    if (matches.length === 0) {
+      this.coins += 30;
+      this.saveProgress();
+      return;
+    }
+
+    // Находим первый возможный ход
+    let hintPositions = null;
+    outer: for (let row = 0; row < this.board.rows; row++) {
+      for (let col = 0; col < this.board.cols; col++) {
+        // Проверяем соседние ячейки
+        const neighbors = [
+          {row: row - 1, col}, // Верхняя
+          {row: row + 1, col}, // Нижняя
+          {row, col: col - 1}, // Левая
+          {row, col: col + 1}  // Правая
+        ];
+
+        for (const neighbor of neighbors) {
+          if (neighbor.row >= 0 && neighbor.row < this.board.rows &&
+              neighbor.col >= 0 && neighbor.col < this.board.cols) {
+            // Пробуем поменять местами
+            this.board.grid[row][col].toggleSelect();
+            this.board.grid[neighbor.row][neighbor.col].toggleSelect();
+            const tile1 = this.board.grid[row][col];
+            this.board.grid[row][col] = this.board.grid[neighbor.row][neighbor.col];
+            this.board.grid[neighbor.row][neighbor.col] = temp;
+
+            if (this.board.checkMatches(false)) {
+              hintPositions = [
+                {row, col},
+                {row: neighbor.row, col: neighbor.col}
+              ];
+              // Возвращаем фишки на место
+              const temp = this.board.grid[row][col];
+              this.board.grid[row][col] = this.board.grid[neighbor.row][neighbor.col];
+              this.board.grid[neighbor.row][neighbor.col] = temp;
+              this.board.grid[row][col].toggleSelect();
+              this.board.grid[neighbor.row][neighbor.col].toggleSelect();
+              break outer;
+            }
+
+            // Возвращаем фишки на место
+            const tile2 = this.board.grid[row][col];
+            this.board.grid[row][col] = this.board.grid[neighbor.row][neighbor.col];
+            this.board.grid[neighbor.row][neighbor.col] = temp;
+            this.board.grid[row][col].toggleSelect();
+            this.board.grid[neighbor.row][neighbor.col].toggleSelect();
+          }
+        }
+      }
+    }
+
+    if (hintPositions) {
+      // Подсвечиваем фишки
+      const [pos1, pos2] = hintPositions;
+      this.board.grid[pos1.row][pos1.col].toggleSelect();
+      this.board.grid[pos2.row][pos2.col].toggleSelect();
+      this.render();
+
+      // Через 3 секунды убираем подсветку
+      setTimeout(() => {
+        this.board.grid[pos1.row][pos1.col].toggleSelect();
+        this.board.grid[pos2.row][pos2.col].toggleSelect();
+        this.render();
+      }, 3000);
+    }
+  }
+
+  showVictoryScreen() {
+    const overlay = document.getElementById('victory-overlay');
+    overlay.classList.remove('hidden');
+        const victoryOverlay = document.createElement('div');
+        victoryOverlay.className = 'victory-overlay';
+    
+        const rewardImage = document.createElement('img');
+        rewardImage.className = 'victory-reward';
+        rewardImage.src = levels[this.currentLevel - 1].rewardImage;
+        rewardImage.onerror = () => {
+          rewardImage.src = '';
+          rewardImage.className = 'victory-placeholder';
+          rewardImage.textContent = `Уровень ${this.currentLevel}`;
+        };
+    
+        const coins = document.createElement('div');
+        coins.className = 'victory-coins';
+        coins.textContent = `+${levels[this.currentLevel - 1].reward} монет`;
+    
+        const nextLevelBtn = document.createElement('button');
+        nextLevelBtn.className = 'victory-btn';
+        nextLevelBtn.textContent = 'Следующий уровень';
+        nextLevelBtn.onclick = () => {
+          document.body.removeChild(victoryOverlay);
+          this.initTilesWithoutMatches();
+          this.render();
+        };
+    
+        const galleryBtn = document.createElement('button');
+        galleryBtn.className = 'victory-btn';
+        galleryBtn.textContent = 'В галерею';
+        galleryBtn.onclick = () => {
+          document.body.removeChild(victoryOverlay);
+          this.showGallery();
+        };
+    
+        victoryOverlay.appendChild(rewardImage);
+        victoryOverlay.appendChild(coins);
+        victoryOverlay.appendChild(nextLevelBtn);
+        victoryOverlay.appendChild(galleryBtn);
+        document.body.appendChild(victoryOverlay);
+  }
+
+  showGallery() {
+    const overlay = document.getElementById('gallery-overlay');
+    overlay.classList.remove('hidden');
+    const galleryOverlay = document.getElementById('gallery-overlay');
+    const galleryGrid = galleryOverlay.querySelector('.gallery-grid');
+    galleryGrid.innerHTML = '';
+
+    const progress = JSON.parse(localStorage.getItem('match3-progress') || '{}');
+    const levelsCompleted = progress.level || 1;
+
+    for (let i = 0; i < levels.length; i++) {
+      const level = levels[i];
+      const reward = document.createElement('div');
+      reward.className = 'gallery-reward';
+
+      if (i < levelsCompleted) {
+        const img = document.createElement('img');
+        img.src = level.rewardImage;
+        img.alt = `Награда уровня ${i + 1}`;
+        img.onerror = () => {
+          img.src = '';
+          img.className = 'gallery-placeholder';
+          img.textContent = `Уровень ${i + 1}`;
+        };
+        reward.appendChild(img);
+      } else {
+        reward.className += ' locked';
+        reward.innerHTML = '🔒';
+      }
+
+      galleryGrid.appendChild(reward);
+    }
+
+    galleryOverlay.classList.remove('hidden');
+
+    document.getElementById('close-gallery-btn').onclick = () => {
+      galleryOverlay.classList.add('hidden');
+    };
   }
 }
 

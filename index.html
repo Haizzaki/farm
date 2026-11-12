@@ -34,6 +34,19 @@
     <button id="shuffle-btn" class="booster-btn">
       Перемешать <span class="booster-cost">50 💰</span>
     </button>
+    <button id="gallery-btn" class="booster-btn">
+      Галерея
+    </button>
+  </div>
+  <div id="victory-overlay" class="victory-overlay hidden">
+    <img id="victory-reward" class="victory-reward" src="" alt="Награда">
+    <div id="victory-coins" class="victory-coins"></div>
+    <button id="next-level-btn" class="victory-btn">Следующий уровень</button>
+    <button id="gallery-btn" class="victory-btn">В галерею</button>
+  </div>
+  <div id="gallery-overlay" class="gallery-overlay hidden">
+    <div class="gallery-grid"></div>
+    <button id="close-gallery-btn" class="victory-btn">Закрыть</button>
   </div>
   <script type="module">
     import Game from './src/js/core/game.js';
