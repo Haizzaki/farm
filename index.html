@@ -8,7 +8,33 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
 </head>
 <body>
+  <div id="hud">
+    <div class="hud-row">
+      <span class="hud-label">Уровень:</span>
+      <span id="current-level" class="hud-value">1</span>
+    </div>
+    <div class="hud-row">
+      <span class="hud-label">Очки:</span>
+      <div class="progress-bar">
+        <div class="progress-fill"></div>
+      </div>
+      <span id="current-score" class="hud-value">0</span>
+      <span id="target-score" class="hud-value">/1000</span>
+    </div>
+    <div class="hud-row">
+      <span class="hud-label">Монеты:</span>
+      <span id="coins" class="hud-value">0</span>
+    </div>
+  </div>
   <div id="game"></div>
+  <div id="boosters">
+    <button id="hint-btn" class="booster-btn">
+      Подсказка <span class="booster-cost">30 💰</span>
+    </button>
+    <button id="shuffle-btn" class="booster-btn">
+      Перемешать <span class="booster-cost">50 💰</span>
+    </button>
+  </div>
   <script type="module">
     import Game from './src/js/core/game.js';
     new Game();

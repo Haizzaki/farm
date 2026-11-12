@@ -1,5 +1,6 @@
 import Board from './board.js';
 import Tile from './tiles.js';
+import levels from '../config/levels.js';
 
 const SCORES = {
   3: 100,
@@ -12,9 +13,33 @@ class Game {
     this.board = new Board(8, 8);
     this.selectedTile = null;
     this.score = 0;
+    this.coins = 0;
+    this.currentLevel = 1;
     this.initTilesWithoutMatches();
+    this.loadProgress();
     this.render();
     this.setupEventListeners();
+  }
+
+  loadProgress() {
+    const savedData = localStorage.getItem('match3-progress');
+    if (savedData) {
+      try {
+        const {level, coins} = JSON.parse(savedData);
+        this.currentLevel = level;
+        this.coins = coins;
+      } catch (e) {
+        console.error('Ошибка загрузки прогресса:', e);
+      }
+    }
+  }
+
+  saveProgress() {
+    const data = JSON.stringify({
+      level: this.currentLevel,
+      coins: this.coins
+    });
+    localStorage.setItem('match3-progress', data);
   }
 
   initTilesWithoutMatches() {
@@ -171,6 +196,7 @@ class Game {
     });
 
     this.fillEmptyTiles();
+    this.checkLevelCompletion();
     this.render();
   }
 
@@ -201,6 +227,49 @@ class Game {
     if (!container) return;
     
     container.innerHTML = '';
+
+    // Обновление HUD
+    const hud = document.getElementById('hud');
+    if (hud) {
+      document.getElementById('current-level').textContent = this.currentLevel;
+      document.getElementById('current-score').textContent = this.score;
+      document.getElementById('target-score').textContent = `/${levels[this.currentLevel - 1].targetScore}`;
+      document.getElementById('coins').textContent = this.coins;
+
+      const progressFill = document.querySelector('.progress-fill');
+      if (progressFill) {
+        const target = levels[this.currentLevel - 1].targetScore;
+        const width = Math.min((this.score / target) * 100, 100);
+        progressFill.style.width = `${width}%`;
+      }
+    }
+
+    // Настройка бустеров
+    const hintBtn = document.getElementById('hint-btn');
+    if (hintBtn) {
+      hintBtn.disabled = this.coins < 30;
+      hintBtn.onclick = () => {
+        if (this.coins >= 30) {
+          this.coins -= 30;
+          this.saveProgress();
+          this.showHint();
+          this.render();
+        }
+      };
+    }
+
+    const shuffleBtn = document.getElementById('shuffle-btn');
+    if (shuffleBtn) {
+      shuffleBtn.disabled = this.coins < 50;
+      shuffleBtn.onclick = () => {
+        if (this.coins >= 50) {
+          this.coins -= 50;
+          this.saveProgress();
+          this.board.shuffleTiles();
+          this.render();
+        }
+      };
+    }
     
     const grid = document.createElement('div');
     grid.className = 'game-grid';
@@ -231,6 +300,26 @@ class Game {
     }
     
     container.appendChild(grid);
+  }
+
+  checkLevelCompletion() {
+    const currentLevelData = levels[this.currentLevel - 1];
+    if (this.score >= currentLevelData.targetScore) {
+      this.coins += currentLevelData.reward;
+      this.currentLevel++;
+      this.score = 0;
+      this.saveProgress();
+      if (this.currentLevel > levels.length) {
+        alert('Поздравляем! Вы прошли все уровни!');
+        this.currentLevel = 1;
+      }
+      this.initTilesWithoutMatches();
+    }
+  }
+
+  showHint() {
+    // Логика показа подсказки
+    console.log('Показать подсказку');
   }
 }
 
